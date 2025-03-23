@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Hero JS</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            border: 4px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #000000, #1a1a1a);
+        }
+        
+        .track {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .hit-zone {
+            position: absolute;
+            bottom: 100px;
+            width: 100%;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-top: 2px solid rgba(255, 255, 255, 0.5);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            z-index: 10;
+        }
+        
+        .lane {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 20%;
+            border-right: 1px solid #333;
+        }
+        
+        .lane:nth-child(1) { left: 0%; background-color: rgba(255, 0, 0, 0.05); }
+        .lane:nth-child(2) { left: 20%; background-color: rgba(0, 255, 0, 0.05); }
+        .lane:nth-child(3) { left: 40%; background-color: rgba(255, 255, 0, 0.05); }
+        .lane:nth-child(4) { left: 60%; background-color: rgba(0, 0, 255, 0.05); }
+        .lane:nth-child(5) { left: 80%; background-color: rgba(255, 0, 255, 0.05); }
+        
+        .button {
+            position: absolute;
+            bottom: 50px;
+            width: 18%;
+            height: 30px;
+            border-radius: 50%;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            border: 2px solid #fff;
+            font-size: 18px;
+        }
+        
+        .key-hint {
+            position: absolute;
+            width: 18%;
+            height: 20px;
+            bottom: 85px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 20;
+            font-size: 14px;
+            text-shadow: 0px 0px 4px #000000;
+        }
+        
+        .button:nth-child(1) { left: 1%; background-color: #ff0000; }
+        .button:nth-child(2) { left: 21%; background-color: #00ff00; }
+        .button:nth-child(3) { left: 41%; background-color: #ffff00; color: #000; }
+        .button:nth-child(4) { left: 61%; background-color: #0000ff; }
+        .button:nth-child(5) { left: 81%; background-color: #ff00ff; }
+        
+        .note {
+            position: absolute;
+            width: 18%;
+            height: 20px;
+            border-radius: 5px;
+            z-index: 5;
+        }
+        
+        .hit-effect {
+            position: absolute;
+            bottom: 100px;
+            width: 18%;
+            height: 50px;
+            border-radius: 5px;
+            opacity: 0;
+            z-index: 15;
+        }
+        
+        .score-container {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            z-index: 30;
+        }
+        
+        .combo-container {
+            position: absolute;
+            top: 60px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 18px;
+            z-index: 30;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 400px;
+        }
+        
+        .start-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .toggle-btn {
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .control-group {
+            width: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .control-group label {
+            font-size: 14px;
+            white-space: nowrap;
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        .control-group input {
+            width: 200px;
+        }
+        
+        .control-group select {
+            width: 200px;
+            padding: 5px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #666;
+            border-radius: 4px;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .feedback {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="game-container">
+            <div class="track">
+                <div class="lane"></div>
+                <div class="lane"></div>
+                <div class="lane"></div>
+                <div class="lane"></div>
+                <div class="lane"></div>
+                <div class="hit-zone"></div>
+                <div class="button">A</div>
+                <div class="button">S</div>
+                <div class="button">J</div>
+                <div class="button">K</div>
+                <div class="button">L</div>
+                <div class="key-hint" style="left: 1%;">A</div>
+                <div class="key-hint" style="left: 21%;">S</div>
+                <div class="key-hint" style="left: 41%;">J</div>
+                <div class="key-hint" style="left: 61%;">K</div>
+                <div class="key-hint" style="left: 81%;">L</div>
+                <div class="hit-effect" style="left: 1%; background-color: rgba(255, 0, 0, 0.7);"></div>
+                <div class="hit-effect" style="left: 21%; background-color: rgba(0, 255, 0, 0.7);"></div>
+                <div class="hit-effect" style="left: 41%; background-color: rgba(255, 255, 0, 0.7);"></div>
+                <div class="hit-effect" style="left: 61%; background-color: rgba(0, 0, 255, 0.7);"></div>
+                <div class="hit-effect" style="left: 81%; background-color: rgba(255, 0, 255, 0.7);"></div>
+                <div class="score-container">Puntuación: <span id="score">0</span></div>
+                <div class="combo-container">Combo: <span id="combo">0</span></div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+        <div class="controls">
+            <button class="start-btn" id="start-btn">Iniciar Juego</button>
+            <div class="game-controls" style="display: none; margin-top: 10px;">
+                <button class="toggle-btn" id="pause-btn" style="background-color: #f39c12; margin-right: 10px;">Pausar</button>
+                <button class="toggle-btn" id="restart-btn" style="background-color: #e74c3c;">Reiniciar</button>
+            </div>
+            <div class="control-group">
+                <label for="speed-slider">Velocidad:</label>
+                <input type="range" id="speed-slider" min="100" max="500" value="300" step="25">
+                <span id="speed-value">300</span>
+            </div>
+            <div class="control-group">
+                <label for="volume-slider">Volumen:</label>
+                <input type="range" id="volume-slider" min="0" max="100" value="80" step="5">
+                <span id="volume-value">80%</span>
+            </div>
+            <button class="toggle-btn" id="toggle-hints">Ocultar guía de teclas</button>
+        </div>
+        <div class="instructions">
+            <p>Usa las teclas A, S, J, K, L para tocar las notas cuando lleguen a la zona de golpeo.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const track = document.querySelector('.track');
+            const startBtn = document.getElementById('start-btn');
+            const scoreElement = document.getElementById('score');
+            const comboElement = document.getElementById('combo');
+            const feedbackElement = document.getElementById('feedback');
+            const hitEffects = document.querySelectorAll('.hit-effect');
+            const speedSlider = document.getElementById('speed-slider');
+            const speedValue = document.getElementById('speed-value');
+            const volumeSlider = document.getElementById('volume-slider');
+            const volumeValue = document.getElementById('volume-value');
+            const toggleHintsBtn = document.getElementById('toggle-hints');
+            const keyHints = document.querySelectorAll('.key-hint');
+            const songSelect = document.getElementById('song-select');
+            
+            // Configuración del juego
+            let noteSpeed = 300; // Velocidad de las notas (px por segundo)
+            const lanes = 5; // Número de carriles
+            const keys = ['a', 's', 'j', 'k', 'l']; // Teclas para cada carril
+            const hitZonePosition = 450; // Posición Y de la zona de golpeo
+            const hitWindowMs = 150; // Margen de tiempo para considerar un golpe válido (ms)
+            
+            // Variables del juego
+            let gameRunning = false;
+            let score = 0;
+            let combo = 0;
+            let notes = []; // Array para almacenar las notas activas
+            let lastNoteTime = 0; // Tiempo desde la última nota generada
+            let difficulty = 1000; // Tiempo entre notas (ms) - se reduce con el tiempo
+            let gameLoop;
+            let startTime;
+           
+            let volume = 0.8; // Volumen predeterminado (0-1)
+            let audioContext = null;
+            
+            
+            
+            // Configuración de colores para cada carril
+            const colors = [
+                '#ff0000', // Rojo
+                '#00ff00', // Verde
+                '#ffff00', // Amarillo
+                '#0000ff', // Azul
+                '#ff00ff'  // Magenta
+            ];
+            
+            // Notas musicales para cada carril (siguiendo orden tradicional de guitarra: E, A, D, G, B)
+            const notes_frequency = [
+                329.63, // E (Mi - 4ª cuerda)
+                440.00, // A (La - 5ª cuerda)
+                587.33, // D (Re - 4ª cuerda)
+                783.99, // G (Sol - 3ª cuerda)
+                987.77  // B (Si - 2ª cuerda)
+            ];
+            
+            // Inicializar Web Audio API
+            function initAudio() {
+                if (audioContext) return;
+                
+                // Crear un nuevo contexto de audio
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            // Reproducir un sonido de guitarra
+            function playGuitarSound(laneIndex) {
+                if (!audioContext) initAudio();
+                
+                // Crear un oscilador
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // Configurar el oscilador para sonar como una cuerda de guitarra
+                oscillator.type = 'triangle'; // Tipo de onda que suena más como guitarra
+                oscillator.frequency.setValueAtTime(notes_frequency[laneIndex], audioContext.currentTime);
+                
+                // Configurar el volumen y el decaimiento del sonido
+                gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
+                
+                // Conectar el oscilador a la salida de audio
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Iniciar y detener el oscilador
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 1.5);
+            }
+            
+            // Control de velocidad
+            speedSlider.addEventListener('input', function() {
+                noteSpeed = parseInt(this.value);
+                speedValue.textContent = noteSpeed;
+            });
+            
+            // Control de volumen
+            volumeSlider.addEventListener('input', function() {
+                volume = parseInt(this.value) / 100;
+                volumeValue.textContent = this.value + '%';
+            });
+            
+            // Alternar visibilidad de las guías de teclas
+            let hintsVisible = true;
+            toggleHintsBtn.addEventListener('click', function() {
+                hintsVisible = !hintsVisible;
+                keyHints.forEach(hint => {
+                    hint.style.display = hintsVisible ? 'flex' : 'none';
+                });
+                this.textContent = hintsVisible ? 'Ocultar guía de teclas' : 'Mostrar guía de teclas';
+            });
+            
+            // Iniciar el juego
+            startBtn.addEventListener('click', function() {
+                if (gameRunning) return;
+                
+                // Inicializar audio
+                initAudio();
+                
+                // Reiniciar valores
+                score = 0;
+                combo = 0;
+                notes = [];
+                difficulty = 1000;
+               
+                scoreElement.textContent = score;
+                comboElement.textContent = combo;
+                
+                // Eliminar todas las notas existentes
+                document.querySelectorAll('.note').forEach(note => note.remove());
+                
+                
+                gameRunning = true;
+                startTime = Date.now();
+                lastNoteTime = startTime;
+                // Iniciar el bucle del juego
+                gameLoop = requestAnimationFrame(update);
+            });
+            
+            // Manejar pulsaciones de teclas
+            document.addEventListener('keydown', function(event) {
+                if (!gameRunning) return;
+                
+                const key = event.key.toLowerCase();
+                const laneIndex = keys.indexOf(key);
+                
+                if (laneIndex !== -1) {
+                    checkHit(laneIndex);
+                    showHitEffect(laneIndex);
+                }
+            });
+            
+            // Función principal de actualización (bucle del juego)
+            function update(timestamp) {
+                if (!gameRunning) return;
+                
+                const currentTime = Date.now();
+                const elapsedTime = currentTime - startTime;
+                
+                // Modo aleatorio: Generar notas de forma aleatoria
+                if (currentTime - lastNoteTime > difficulty) {
+                    generateRandomNote();
+                    lastNoteTime = currentTime;
+                    
+                    // Aumentar dificultad gradualmente
+                    difficulty = Math.max(400, 1000 - Math.floor(elapsedTime / 10000) * 100);
+                }
+                // Mover notas existentes
+                moveNotes();
+                
+                // Comprobar notas perdidas
+                checkMissedNotes();
+                
+                // Continuar el bucle
+                gameLoop = requestAnimationFrame(update);
+            }
+            
+            // Generar una nueva nota en un carril aleatorio
+            function generateRandomNote() {
+                const laneIndex = Math.floor(Math.random() * lanes);
+                generateSpecificNote(laneIndex);
+            }
+            
+            // Generar una nota en un carril específico
+            function generateSpecificNote(laneIndex) {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note';
+                noteElement.style.backgroundColor = colors[laneIndex];
+                noteElement.style.left = (1 + laneIndex * 20) + '%';
+                noteElement.style.top = '0px';
+                
+                track.appendChild(noteElement);
+                
+                notes.push({
+                    element: noteElement,
+                    lane: laneIndex,
+                    position: 0,
+                    hit: false
+                });
+            }
+            
+            // Mover todas las notas hacia abajo
+            function moveNotes() {
+                const step = noteSpeed / 60; // Distancia a mover en cada frame
+                
+                notes.forEach(note => {
+                    if (note.hit) return;
+                    
+                    note.position += step;
+                    note.element.style.top = note.position + 'px';
+                });
+            }
+            
+            // Comprobar si el jugador ha acertado una nota
+            function checkHit(laneIndex) {
+                const currentTime = Date.now();
+                
+                // Buscar notas en el carril seleccionado que estén cerca de la zona de golpeo
+                for (let i = 0; i < notes.length; i++) {
+                    const note = notes[i];
+                    
+                    if (note.lane === laneIndex && !note.hit) {
+                        const notePos = note.position;
+                        
+                        // Comprobar si la nota está en la zona de golpeo
+                        if (Math.abs(notePos - hitZonePosition) <= 50) {
+                            // Calcular precisión del golpe
+                            const distance = Math.abs(notePos - hitZonePosition);
+                            let points = 0;
+                            let feedback = "";
+                            
+                            if (distance < 10) {
+                                // Perfecto
+                                points = 100;
+                                combo++;
+                                feedback = "¡PERFECTO!";
+                            } else if (distance < 25) {
+                                // Bueno
+                                points = 50;
+                                combo++;
+                                feedback = "¡BIEN!";
+                            } else {
+                                // Aceptable
+                                points = 10;
+                                combo++;
+                                feedback = "OK";
+                            }
+                            
+                            // Aplicar multiplicador de combo
+                            const comboMultiplier = Math.floor(combo / 10) + 1;
+                            score += points * comboMultiplier;
+                            
+                            // Actualizar interfaz
+                            scoreElement.textContent = score;
+                            comboElement.textContent = combo;
+                            
+                            // Mostrar feedback
+                            showFeedback(feedback);
+                            
+                            // Reproducir sonido de guitarra
+                            playGuitarSound(note.lane);
+                            
+                            // Marcar nota como golpeada y eliminarla
+                            note.hit = true;
+                            note.element.remove();
+                            notes.splice(i, 1);
+                            
+                            return true;
+                        }
+                    }
+                }
+                
+                // Si llegamos aquí, el jugador ha fallado
+                resetCombo();
+                showFeedback("¡FALLADO!");
+                return false;
+            }
+            
+            // Comprobar si hay notas que se han pasado de la zona de golpeo
+            function checkMissedNotes() {
+                for (let i = notes.length - 1; i >= 0; i--) {
+                    const note = notes[i];
+                    
+                    if (!note.hit && note.position > 550) {
+                        // La nota se ha pasado de la zona de golpeo
+                        note.element.remove();
+                        notes.splice(i, 1);
+                        resetCombo();
+                        showFeedback("¡PERDIDA!");
+                    }
+                }
+            }
+            
+            // Resetear el combo cuando se falla una nota
+            function resetCombo() {
+                combo = 0;
+                comboElement.textContent = combo;
+            }
+            
+            // Mostrar efecto visual al golpear
+            function showHitEffect(laneIndex) {
+                const effect = hitEffects[laneIndex];
+                effect.style.opacity = '1';
+                
+                setTimeout(() => {
+                    effect.style.opacity = '0';
+                }, 100);
+            }
+            
+            // Mostrar mensaje de feedback (perfecto, bien, etc.)
+            function showFeedback(text) {
+                feedbackElement.textContent = text;
+                feedbackElement.style.opacity = '1';
+                
+                setTimeout(() => {
+                    feedbackElement.style.opacity = '0';
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>
