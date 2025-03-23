@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Juegos y Aplicaciones</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --tertiary-color: #e74c3c;
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            --hover-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            display: flex;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .search-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .search-button:hover {
+            background-color: #2980b9;
+        }
+
+        .categories {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .category-button {
+            background-color: #eee;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .category-button:hover {
+            background-color: #ddd;
+        }
+
+        .category-button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .card-image {
+            height: 180px;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover .card-image img {
+            transform: scale(1.05);
+        }
+
+        .card-content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .card-description {
+            color: #666;
+            margin-bottom: 15px;
+            flex: 1;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .card-type {
+            background-color: #f0f0f0;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .card-action {
+            text-align: center;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-tertiary {
+            background-color: var(--tertiary-color);
+        }
+
+        .btn-tertiary:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .add-game {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--primary-color);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .add-game:hover {
+            transform: rotate(90deg);
+            background-color: #2980b9;
+        }
+
+        .add-game i {
+            font-size: 24px;
+        }
+
+        /* Modal para añadir juego */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #aaa;
+            transition: var(--transition);
+        }
+
+        .close-modal:hover {
+            color: var(--text-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        footer {
+            margin-top: 80px;
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* Modo oscuro */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg: #1e1e1e;
+                --text-color: #f0f0f0;
+            }
+
+            .category-button {
+                background-color: #333;
+            }
+
+            .category-button:hover {
+                background-color: #444;
+            }
+
+            .search-input {
+                background-color: #333;
+                color: #f0f0f0;
+            }
+
+            .card-type {
+                background-color: #333;
+                color: #ddd;
+            }
+
+            .form-input,
+            .form-textarea,
+            .form-select {
+                background-color: #333;
+                color: #f0f0f0;
+                border-color: #444;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            header {
+                padding: 20px 0;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+
+            .card-image {
+                height: 150px;
+            }
+
+            .add-game {
+                width: 50px;
+                height: 50px;
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Portal de Juegos y Aplicaciones</h1>
+            <p class="subtitle">Colección de juegos y herramientas desarrolladas en HTML, CSS y JavaScript</p>
+        </header>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" class="search-input" id="search-input" placeholder="Buscar juegos...">
+                <button class="search-button" id="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="categories">
+            <button class="category-button active" data-category="all">Todos</button>
+            <button class="category-button" data-category="game">Juegos</button>
+            <button class="category-button" data-category="tool">Herramientas</button>
+            <button class="category-button" data-category="retro">Retro</button>
+            <button class="category-button" data-category="puzzle">Puzzle</button>
+        </div>
+
+        <div class="cards-container" id="cards-container">
+            <!-- Snake Game -->
+            <div class="card" data-type="game puzzle">
+                <div class="card-image">
+                    <img src="https://i.imgur.com/aH1L5qP.png" alt="Snake Game">
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Snake Game</h3>
+                    <div class="card-meta">
+                        <span class="card-difficulty">Dificultad: Media</span>
+                        <span class="card-type">Juego</span>
+                    </div>
+                    <p class="card-description">Clásico juego de la serpiente. Come la comida, crece y evita chocar contra las paredes o contra ti mismo.</p>
+                    <div class="card-action">
+                        <a href="snake-game.html" class="btn">Jugar</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Air Hockey -->
+            <div class="card" data-type="game">
+                <div class="card-image">
+                    <img src="https://i.imgur.com/dCUJMbD.png" alt="Air Hockey">
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Air Hockey</h3>
+                    <div class="card-meta">
+                        <span class="card-difficulty">Dificultad: Fácil</span>
+                        <span class="card-type">Juego</span>
+                    </div>
+                    <p class="card-description">Juego para dos jugadores donde tienes que marcar gol en la portería contraria. Usa W/S y flechas para controlar.</p>
+                    <div class="card-action">
+                        <a href="soccer.html" class="btn btn-secondary">Jugar</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Space Impact -->
+            <div class="card" data-type="game retro">
+                <div class="card-image">
+                    <img src="https://i.imgur.com/LZoKI9z.png" alt="Space Impact">
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Space Impact</h3>
+                    <div class="card-meta">
+                        <span class="card-difficulty">Dificultad: Media</span>
+                        <span class="card-type">Retro</span>
+                    </div>
+                    <p class="card-description">Versión moderna del clásico juego de disparos de Nokia. Esquiva enemigos, dispara y derrota al jefe final.</p>
+                    <div class="card-action">
+                        <a href="space-impact.html" class="btn btn-tertiary">Jugar</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scientific Calculator -->
+            <div class="card" data-type="tool">
+                <div class="card-image">
+                    <img src="https://i.imgur.com/cZZUchG.png" alt="Calculadora Científica">
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Calculadora Científica</h3>
+                    <div class="card-meta">
+                        <span class="card-difficulty">Complejidad: Alta</span>
+                        <span class="card-type">Herramienta</span>
+                    </div>
+                    <p class="card-description">Calculadora con funciones científicas como trigonometría, logaritmos y más. Incluye modo básico y científico.</p>
+                    <div class="card-action">
+                        <a href="calculadora.html" class="btn btn-outline">Abrir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="add-game" id="add-game-button">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <div class="modal" id="add-game-modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <h2 class="modal-title">Añadir nuevo juego</h2>
+            <form id="add-game-form">
+                <div class="form-group">
+                    <label for="game-title" class="form-label">Título</label>
+                    <input type="text" id="game-title" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="game-image" class="form-label">URL de la imagen</label>
+                    <input type="url" id="game-image" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="game-description" class="form-label">Descripción</label>
+                    <textarea id="game-description" class="form-textarea" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="game-url" class="form-label">URL del juego (archivo HTML)</label>
+                    <input type="text" id="game-url" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="game-difficulty" class="form-label">Dificultad</label>
+                    <select id="game-difficulty" class="form-select" required>
+                        <option value="Fácil">Fácil</option>
+                        <option value="Media">Media</option>
+                        <option value="Difícil">Difícil</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="game-type" class="form-label">Tipo</label>
+                    <select id="game-type" class="form-select" required>
+                        <option value="game">Juego</option>
+                        <option value="tool">Herramienta</option>
+                        <option value="retro">Retro</option>
+                        <option value="puzzle">Puzzle</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="button-color" class="form-label">Color del botón</label>
+                    <select id="button-color" class="form-select">
+                        <option value="">Azul (Predeterminado)</option>
+                        <option value="btn-secondary">Verde</option>
+                        <option value="btn-tertiary">Rojo</option>
+                        <option value="btn-outline">Contorno</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="cancel-add" class="btn btn-outline">Cancelar</button>
+                    <button type="submit" class="btn">Añadir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>Desarrollado con HTML, CSS y JavaScript. Todos los juegos y aplicaciones se ejecutan en el navegador.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const categoryButtons = document.querySelectorAll('.category-button');
+            const cardsContainer = document.getElementById('cards-container');
+            const cards = document.querySelectorAll('.card');
+            const addGameButton = document.getElementById('add-game-button');
+            const addGameModal = document.getElementById('add-game-modal');
+            const closeModalButton = document.getElementById('close-modal');
+            const cancelAddButton = document.getElementById('cancel-add');
+            const addGameForm = document.getElementById('add-game-form');
+
+            // Guardar juegos en almacenamiento local
+            function saveGames() {
+                const cards = document.querySelectorAll('.card');
+                const games = [];
+
+                cards.forEach(card => {
+                    const title = card.querySelector('.card-title').textContent;
+                    const image = card.querySelector('.card-image img').src;
+                    const description = card.querySelector('.card-description').textContent;
+                    const difficulty = card.querySelector('.card-difficulty').textContent.replace('Dificultad: ', '');
+                    const type = card.querySelector('.card-type').textContent;
+                    const url = card.querySelector('.card-action a').href;
+                    const buttonClass = card.querySelector('.card-action a').className.replace('btn ', '').trim();
+                    const dataType = card.getAttribute('data-type');
+
+                    games.push({
+                        title,
+                        image,
+                        description,
+                        difficulty,
+                        type,
+                        url,
+                        buttonClass,
+                        dataType
+                    });
+                });
+
+                localStorage.setItem('games', JSON.stringify(games));
+            }
+
+            // Cargar juegos desde almacenamiento local
+            function loadGames() {
+                const savedGames = localStorage.getItem('games');
+                if (savedGames) {
+                    const games = JSON.parse(savedGames);
+                    
+                    // Verificar si hay juegos nuevos (no incluidos en el HTML original)
+                    const existingTitles = Array.from(cards).map(card => 
+                        card.querySelector('.card-title').textContent
+                    );
+                    
+                    games.forEach(game => {
+                        if (!existingTitles.includes(game.title)) {
+                            addGameCard(
+                                game.title,
+                                game.image,
+                                game.description,
+                                game.url,
+                                game.difficulty,
+                                game.type,
+                                game.buttonClass,
+                                game.dataType
+                            );
+                        }
+                    });
+                }
+            }
+
+            // Filtrar tarjetas por categoría
+            function filterByCategory(category) {
+                cards.forEach(card => {
+                    if (category === 'all' || card.getAttribute('data-type').includes(category)) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            // Filtrar tarjetas por búsqueda
+            function filterBySearch(query) {
+                query = query.toLowerCase();
+                
+                cards.forEach(card => {
+                    const title = card.querySelector('.card-title').textContent.toLowerCase();
+                    const description = card.querySelector('.card-description').textContent.toLowerCase();
+                    const type = card.querySelector('.card-type').textContent.toLowerCase();
+                    
+                    if (title.includes(query) || description.includes(query) || type.includes(query)) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            // Añadir nueva tarjeta de juego
+            function addGameCard(title, image, description, url, difficulty, type, buttonClass, dataType) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.setAttribute('data-type', dataType || type.toLowerCase());
+
+                card.innerHTML = `
+                    <div class="card-image">
+                        <img src="${image}" alt="${title}">
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">${title}</h3>
+                        <div class="card-meta">
+                            <span class="card-difficulty">Dificultad: ${difficulty}</span>
+                            <span class="card-type">${type}</span>
+                        </div>
+                        <p class="card-description">${description}</p>
+                        <div class="card-action">
+                            <a href="${url}" class="btn ${buttonClass || ''}">Jugar</a>
+                        </div>
+                    </div>
+                `;
+
+                cardsContainer.appendChild(card);
+                
+                // Guardar juegos actualizados
+                saveGames();
+            }
+
+            // Event Listeners para categorías
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Remover clase activa de todos los botones
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // Añadir clase activa al botón seleccionado
+                    button.classList.add('active');
+                    
+                    // Filtrar tarjetas
+                    filterByCategory(button.getAttribute('data-category'));
+                });
+            });
+
+            // Event Listener para búsqueda
+            searchButton.addEventListener('click', () => {
+                filterBySearch(searchInput.value);
+            });
+
+            searchInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    filterBySearch(searchInput.value);
+                }
+            });
+
+            // Event Listeners para modal
+            addGameButton.addEventListener('click', () => {
+                addGameModal.classList.add('active');
+            });
+
+            closeModalButton.addEventListener('click', () => {
+                addGameModal.classList.remove('active');
+                addGameForm.reset();
+            });
+
+            cancelAddButton.addEventListener('click', () => {
+                addGameModal.classList.remove('active');
+                addGameForm.reset();
+            });
+
+            // Event Listener para formulario
+            addGameForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                
+                // Obtener valores del formulario
+                const title = document.getElementById('game-title').value;
+                const image = document.getElementById('game-image').value;
+                const description = document.getElementById('game-description').value;
+                const url = document.getElementById('game-url').value;
+                const difficulty = document.getElementById('game-difficulty').value;
+                const type = document.getElementById('game-type').value;
+                const buttonClass = document.getElementById('button-color').value;
+                
+                // Convertir tipo para data-type
+                let dataType = type;
+                if (type === 'game') {
+                    dataType = 'game';
+                }
+                
+                // Añadir nueva tarjeta
+                addGameCard(title, image, description, url, difficulty, type.charAt(0).toUpperCase() + type.slice(1), buttonClass, dataType);
+                
+                // Cerrar modal y resetear formulario
+                addGameModal.classList.remove('active');
+                addGameForm.reset();
+            });
+
+            // Cargar juegos guardados al iniciar
+            loadGames();
+        });
+    </script>
+</body>
+</html>

@@ -268,6 +268,9 @@
             // Elementos del DOM
             const track = document.querySelector('.track');
             const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');  // New
+            const restartBtn = document.getElementById('restart-btn');  // New
+            const gameControls = document.querySelector('.game-controls'); // New
             const scoreElement = document.getElementById('score');
             const comboElement = document.getElementById('combo');
             const feedbackElement = document.getElementById('feedback');
@@ -289,6 +292,7 @@
             
             // Variables del juego
             let gameRunning = false;
+            let gamePaused = false;
             let score = 0;
             let combo = 0;
             let notes = []; // Array para almacenar las notas activas
@@ -397,11 +401,68 @@
                 
                 gameRunning = true;
                 startTime = Date.now();
+                gamePaused = false;
                 lastNoteTime = startTime;
+
+                // Show game controls when game starts - ADD THIS LINE
+                gameControls.style.display = 'block';
+                // Optional: Update start button appearance - ADD THESE LINES
+                startBtn.textContent = 'Juego en Progreso';
+                startBtn.disabled = true;
+    
                 // Iniciar el bucle del juego
                 gameLoop = requestAnimationFrame(update);
             });
-            
+            // Pause/Resume button
+            pauseBtn.addEventListener('click', function() {
+                if (!gameRunning) return;
+                
+                gamePaused = !gamePaused;
+                
+                if (gamePaused) {
+                    // Pause game
+                    this.textContent = 'Reanudar';
+                    showFeedback("PAUSADO");
+                } else {
+                    // Resume game
+                    this.textContent = 'Pausar';
+                    lastNoteTime = Date.now();  // Reset note generation timer to prevent burst of notes
+                    showFeedback("¡CONTINUAMOS!");
+                }
+            });
+            // Restart button
+            restartBtn.addEventListener('click', function() {
+                if (!gameRunning) return;
+                
+                // Cancel current animation frame
+                cancelAnimationFrame(gameLoop);
+                
+                // Reset game variables
+                score = 0;
+                combo = 0;
+                notes = [];
+                difficulty = 1000;
+                gameRunning = true;
+                gamePaused = false;
+                
+                // Update display
+                scoreElement.textContent = score;
+                comboElement.textContent = combo;
+                pauseBtn.textContent = 'Pausar';
+                
+                // Remove all existing notes
+                document.querySelectorAll('.note').forEach(note => note.remove());
+                
+                // Start fresh
+                startTime = Date.now();
+                lastNoteTime = startTime;
+                
+                showFeedback("¡REINICIADO!");
+                
+                // Restart game loop
+                gameLoop = requestAnimationFrame(update);
+            });
+
             // Manejar pulsaciones de teclas
             document.addEventListener('keydown', function(event) {
                 if (!gameRunning) return;
@@ -418,6 +479,11 @@
             // Función principal de actualización (bucle del juego)
             function update(timestamp) {
                 if (!gameRunning) return;
+                if (gamePaused) {
+                    // If game is paused, just keep the animation frame going but don't update game state
+                    gameLoop = requestAnimationFrame(update);
+                    return;
+                }
                 
                 const currentTime = Date.now();
                 const elapsedTime = currentTime - startTime;
@@ -580,6 +646,15 @@
                 setTimeout(() => {
                     feedbackElement.style.opacity = '0';
                 }, 500);
+            }
+            // Add function to end game (useful for future features)
+            function endGame() {
+                gameRunning = false;
+                cancelAnimationFrame(gameLoop);
+                gameControls.style.display = 'none';
+                startBtn.textContent = 'Iniciar Juego';
+                startBtn.disabled = false;
+                showFeedback("¡JUEGO TERMINADO!");
             }
         });
     </script>

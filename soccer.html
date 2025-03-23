@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Hockey - Juego para dos jugadores</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow: hidden;
+            flex-direction: column;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            border: 4px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #333;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        #game-canvas {
+            background-color: #165e36;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            margin-top: 20px;
+        }
+        
+        .control-panel {
+            background-color: #333;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            width: 45%;
+        }
+        
+        h2 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .instructions {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .score-display {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+        
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 5px;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        #player1-score {
+            background-color: #c53030;
+        }
+        
+        #player2-score {
+            background-color: #3182ce;
+        }
+        
+        .divider {
+            margin: 0 10px;
+            font-size: 24px;
+        }
+        
+        button {
+            background-color: #2c5282;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2b6cb0;
+        }
+        
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+            width: 300px;
+        }
+        
+        .game-message.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .message-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #f0f0f0;
+        }
+        
+        .message-content {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #d0d0d0;
+        }
+        
+        .message-buttons {
+            display: flex;
+            justify-content: center;
+        }
+        
+        @media (max-width: 850px) {
+            #game-container {
+                width: 90%;
+                height: auto;
+                aspect-ratio: 16/10;
+            }
+            
+            .controls {
+                width: 90%;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-panel {
+                width: 90%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div class="game-message" id="start-message">
+            <div class="message-title">Air Hockey</div>
+            <div class="message-content">
+                <p>Jugador 1: Usa W y S para mover</p>
+                <p>Jugador 2: Usa ↑ y ↓ para mover</p>
+                <p>¡El primero en llegar a 7 puntos gana!</p>
+            </div>
+            <div class="message-buttons">
+                <button id="start-button">¡Jugar!</button>
+            </div>
+        </div>
+        <div class="game-message" id="goal-message">
+            <div class="message-title">¡GOL!</div>
+            <div class="message-content" id="goal-text"></div>
+            <div class="message-buttons">
+                <button id="continue-button">Continuar</button>
+            </div>
+        </div>
+        <div class="game-message" id="winner-message">
+            <div class="message-title">¡Fin del Juego!</div>
+            <div class="message-content" id="winner-text"></div>
+            <div class="message-buttons">
+                <button id="restart-button">Nueva Partida</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <div class="control-panel">
+            <h2>Controles</h2>
+            <div class="instructions">
+                <p><strong>Jugador 1 (Rojo):</strong> W = Arriba, S = Abajo</p>
+                <p><strong>Jugador 2 (Azul):</strong> ↑ = Arriba, ↓ = Abajo</p>
+            </div>
+        </div>
+        <div class="control-panel">
+            <h2>Puntuación</h2>
+            <div class="score-display">
+                <div class="score" id="player1-score">0</div>
+                <div class="divider">-</div>
+                <div class="score" id="player2-score">0</div>
+            </div>
+            <div style="text-align: center; margin-top: 5px;">
+                <button id="reset-button">Reiniciar Juego</button>
+                <button id="pause-button">Pausar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+            const player1ScoreElement = document.getElementById('player1-score');
+            const player2ScoreElement = document.getElementById('player2-score');
+            const startMessage = document.getElementById('start-message');
+            const goalMessage = document.getElementById('goal-message');
+            const winnerMessage = document.getElementById('winner-message');
+            const goalText = document.getElementById('goal-text');
+            const winnerText = document.getElementById('winner-text');
+            const startButton = document.getElementById('start-button');
+            const continueButton = document.getElementById('continue-button');
+            const restartButton = document.getElementById('restart-button');
+            const resetButton = document.getElementById('reset-button');
+            const pauseButton = document.getElementById('pause-button');
+            
+            // Ajustar canvas al tamaño del contenedor
+            function resizeCanvas() {
+                const container = document.getElementById('game-container');
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+            
+            // Llamar a resize inicialmente y cuando cambia el tamaño de la ventana
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Variables globales
+            let gameRunning = false;
+            let gamePaused = false;
+            let animationFrameId = null;
+            
+            // Puntuaciones
+            let player1Score = 0;
+            let player2Score = 0;
+            const winningScore = 7;
+            
+            // Dimensiones
+            const paddleWidth = 20;
+            const paddleHeight = 100;
+            const ballRadius = 10;
+            const goalWidth = 10;
+            const goalHeight = 150;
+            
+            // Jugadores (paletas)
+            const player1 = {
+                x: 40,
+                y: canvas.height / 2 - paddleHeight / 2,
+                width: paddleWidth,
+                height: paddleHeight,
+                color: '#c53030',
+                speed: 8,
+                score: 0,
+                upPressed: false,
+                downPressed: false
+            };
+            
+            const player2 = {
+                x: canvas.width - 40 - paddleWidth,
+                y: canvas.height / 2 - paddleHeight / 2,
+                width: paddleWidth,
+                height: paddleHeight,
+                color: '#3182ce',
+                speed: 8,
+                score: 0,
+                upPressed: false,
+                downPressed: false
+            };
+            
+            // Balón
+            const ball = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: ballRadius,
+                speedX: 5,
+                speedY: 5,
+                color: 'white',
+                baseSpeed: 10,
+                maxSpeed: 12
+            };
+            
+            // Porterías
+            const goal1 = {
+                x: 0,
+                y: canvas.height / 2 - goalHeight / 2,
+                width: goalWidth,
+                height: goalHeight,
+                color: '#c53030'
+            };
+            
+            const goal2 = {
+                x: canvas.width - goalWidth,
+                y: canvas.height / 2 - goalHeight / 2,
+                width: goalWidth,
+                height: goalHeight,
+                color: '#3182ce'
+            };
+            
+            // Elemento central (línea divisoria)
+            const centerLine = {
+                x: canvas.width / 2,
+                lineWidth: 4,
+                gapSize: 20,
+                dashSize: 15
+            };
+            
+            // Controles de teclado
+            function setupControls() {
+                document.addEventListener('keydown', (e) => {
+                    if (!gameRunning || gamePaused) return;
+                    
+                    // Jugador 1 (W/S)
+                    if (e.key === 'w' || e.key === 'W') {
+                        player1.upPressed = true;
+                    } else if (e.key === 's' || e.key === 'S') {
+                        player1.downPressed = true;
+                    }
+                    
+                    // Jugador 2 (Flechas)
+                    if (e.key === 'ArrowUp') {
+                        player2.upPressed = true;
+                    } else if (e.key === 'ArrowDown') {
+                        player2.downPressed = true;
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    // Jugador 1 (W/S)
+                    if (e.key === 'w' || e.key === 'W') {
+                        player1.upPressed = false;
+                    } else if (e.key === 's' || e.key === 'S') {
+                        player1.downPressed = false;
+                    }
+                    
+                    // Jugador 2 (Flechas)
+                    if (e.key === 'ArrowUp') {
+                        player2.upPressed = false;
+                    } else if (e.key === 'ArrowDown') {
+                        player2.downPressed = false;
+                    }
+                    
+                    // Pausar/Reanudar
+                    if (e.key === 'p' || e.key === 'P') {
+                        togglePause();
+                    }
+                });
+            }
+            
+            // Dibujar el tablero
+            function drawBoard() {
+                // Fondo
+                ctx.fillStyle = '#165e36';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Círculo central
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, 70, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Círculo central pequeño
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, 10, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fill();
+                
+                // Línea central
+                const startY = 0;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = centerLine.lineWidth;
+                ctx.setLineDash([centerLine.dashSize, centerLine.gapSize]);
+                
+                ctx.beginPath();
+                ctx.moveTo(centerLine.x, startY);
+                ctx.lineTo(centerLine.x, canvas.height);
+                ctx.stroke();
+                
+                ctx.setLineDash([]);
+                
+                // Borde del campo
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+            }
+            
+            // Dibujar porterías
+            function drawGoals() {
+                // Actualizar posiciones (por si cambia el tamaño)
+                goal1.y = canvas.height / 2 - goalHeight / 2;
+                goal2.x = canvas.width - goalWidth;
+                goal2.y = canvas.height / 2 - goalHeight / 2;
+                
+                // Portería 1
+                ctx.fillStyle = goal1.color;
+                ctx.fillRect(goal1.x, goal1.y, goal1.width, goal1.height);
+                
+                // Portería 2
+                ctx.fillStyle = goal2.color;
+                ctx.fillRect(goal2.x, goal2.y, goal2.width, goal2.height);
+            }
+            
+            // Dibujar jugadores
+            function drawPlayers() {
+                // Jugador 1
+                ctx.fillStyle = player1.color;
+                ctx.fillRect(player1.x, player1.y, player1.width, player1.height);
+                
+                // Jugador 2
+                ctx.fillStyle = player2.color;
+                ctx.fillRect(player2.x, player2.y, player2.width, player2.height);
+            }
+            
+            // Dibujar balón
+            function drawBall() {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = ball.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+            
+            // Mover jugadores
+            function movePlayers() {
+                // Jugador 1
+                if (player1.upPressed) {
+                    player1.y = Math.max(0, player1.y - player1.speed);
+                }
+                if (player1.downPressed) {
+                    player1.y = Math.min(canvas.height - player1.height, player1.y + player1.speed);
+                }
+                
+                // Jugador 2
+                if (player2.upPressed) {
+                    player2.y = Math.max(0, player2.y - player2.speed);
+                }
+                if (player2.downPressed) {
+                    player2.y = Math.min(canvas.height - player2.height, player2.y + player2.speed);
+                }
+            }
+            
+            // Mover balón
+            function moveBall() {
+                ball.x += ball.speedX;
+                ball.y += ball.speedY;
+                
+                // Rebote superior e inferior
+                if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+                    ball.speedY = -ball.speedY;
+                    playSound('bounce');
+                }
+                
+                // Comprobar goles
+                if (ball.x - ball.radius < 0) {
+                    // Comprobar si entra en la portería
+                    if (ball.y > goal1.y && ball.y < goal1.y + goal1.height) {
+                        player2Score++;
+                        player2ScoreElement.textContent = player2Score;
+                        playSound('goal');
+                        showGoalMessage("¡El Jugador 2 (Azul) ha marcado!");
+                        
+                        if (player2Score >= winningScore) {
+                            gameWon(2);
+                        } else {
+                            resetBall();
+                        }
+                    } else {
+                        // Rebote en pared izquierda
+                        ball.speedX = -ball.speedX;
+                        ball.x = ball.radius;
+                        playSound('bounce');
+                    }
+                } else if (ball.x + ball.radius > canvas.width) {
+                    // Comprobar si entra en la portería
+                    if (ball.y > goal2.y && ball.y < goal2.y + goal2.height) {
+                        player1Score++;
+                        player1ScoreElement.textContent = player1Score;
+                        playSound('goal');
+                        showGoalMessage("¡El Jugador 1 (Rojo) ha marcado!");
+                        
+                        if (player1Score >= winningScore) {
+                            gameWon(1);
+                        } else {
+                            resetBall();
+                        }
+                    } else {
+                        // Rebote en pared derecha
+                        ball.speedX = -ball.speedX;
+                        ball.x = canvas.width - ball.radius;
+                        playSound('bounce');
+                    }
+                }
+                
+                // Colisión con jugador 1
+                if (
+                    ball.x - ball.radius < player1.x + player1.width &&
+                    ball.x + ball.radius > player1.x &&
+                    ball.y - ball.radius < player1.y + player1.height &&
+                    ball.y + ball.radius > player1.y
+                ) {
+                    handlePaddleCollision(player1);
+                }
+                
+                // Colisión con jugador 2
+                if (
+                    ball.x - ball.radius < player2.x + player2.width &&
+                    ball.x + ball.radius > player2.x &&
+                    ball.y - ball.radius < player2.y + player2.height &&
+                    ball.y + ball.radius > player2.y
+                ) {
+                    handlePaddleCollision(player2);
+                }
+            }
+            
+            // Manejar colisión con paleta
+            function handlePaddleCollision(player) {
+                // Calcular posición relativa del impacto en la paleta (0 a 1)
+                const relativeIntersectY = (player.y + (player.height / 2)) - ball.y;
+                const normalizedRelativeIntersectionY = relativeIntersectY / (player.height / 2);
+                
+                // Calcular ángulo de rebote (-1 a 1) * 45 grados
+                const bounceAngle = normalizedRelativeIntersectionY * (Math.PI / 4);
+                
+                // Determinar dirección según la paleta
+                const direction = player === player1 ? 1 : -1;
+                
+                // Calcular nueva velocidad con un componente aleatorio para variedad
+                const random = Math.random() * 0.2 + 0.9; // 0.9 a 1.1
+                const speed = Math.min(ball.baseSpeed + player1Score + player2Score * 0.5, ball.maxSpeed) * random;
+                
+                // Asignar velocidades según el ángulo
+                ball.speedX = direction * speed * Math.cos(bounceAngle);
+                ball.speedY = speed * -Math.sin(bounceAngle);
+                
+                // Ajustar posición para evitar que se quede "pegado" a la paleta
+                if (player === player1) {
+                    ball.x = player1.x + player1.width + ball.radius;
+                } else {
+                    ball.x = player2.x - ball.radius;
+                }
+                
+                playSound('paddle');
+            }
+            
+            // Resetear balón
+            function resetBall() {
+                pauseGame();
+                setTimeout(() => {
+                    ball.x = canvas.width / 2;
+                    ball.y = canvas.height / 2;
+                    
+                    // Dirección aleatoria
+                    const randomAngle = (Math.random() * Math.PI / 2) - Math.PI / 4; // -45 a 45 grados
+                    const direction = Math.random() < 0.5 ? 1 : -1;
+                    const baseSpeed = ball.baseSpeed + (player1Score + player2Score) * 0.3;
+                    
+                    ball.speedX = direction * baseSpeed * Math.cos(randomAngle);
+                    ball.speedY = baseSpeed * Math.sin(randomAngle);
+                }, 500);
+            }
+            
+            // Mostrar mensaje de gol
+            function showGoalMessage(message) {
+                gameRunning = false;
+                goalText.textContent = message;
+                goalMessage.classList.add('visible');
+            }
+            
+            // Fin de juego
+            function gameWon(winner) {
+                gameRunning = false;
+                if (winner === 1) {
+                    winnerText.textContent = "¡El Jugador 1 (Rojo) ha ganado!";
+                } else {
+                    winnerText.textContent = "¡El Jugador 2 (Azul) ha ganado!";
+                }
+                winnerMessage.classList.add('visible');
+                playSound('victory');
+            }
+            
+            // Iniciar juego
+            function startGame() {
+                player1Score = 0;
+                player2Score = 0;
+                player1ScoreElement.textContent = player1Score;
+                player2ScoreElement.textContent = player2Score;
+                
+                // Colocar jugadores
+                player1.x = 40;
+                player1.y = canvas.height / 2 - paddleHeight / 2;
+                
+                player2.x = canvas.width - 40 - paddleWidth;
+                player2.y = canvas.height / 2 - paddleHeight / 2;
+                
+                // Colocar balón en el centro
+                ball.x = canvas.width / 2;
+                ball.y = canvas.height / 2;
+                
+                // Velocidad inicial aleatoria
+                const randomAngle = (Math.random() * Math.PI / 2) - Math.PI / 4; // -45 a 45 grados
+                const direction = Math.random() < 0.5 ? 1 : -1;
+                
+                ball.speedX = direction * ball.baseSpeed * Math.cos(randomAngle);
+                ball.speedY = ball.baseSpeed * Math.sin(randomAngle);
+                
+                // Ocultar mensajes
+                startMessage.classList.remove('visible');
+                goalMessage.classList.remove('visible');
+                winnerMessage.classList.remove('visible');
+                
+                gameRunning = true;
+                gamePaused = false;
+                pauseButton.textContent = 'Pausar';
+                
+                // Iniciar bucle de juego
+                if (!animationFrameId) {
+                    gameLoop();
+                }
+                
+                playSound('start');
+            }
+            
+            // Pausar/Reanudar juego
+            function togglePause() {
+                if (gameRunning) {
+                    if (gamePaused) {
+                        resumeGame();
+                    } else {
+                        pauseGame();
+                    }
+                }
+            }
+            
+            // Pausar juego
+            function pauseGame() {
+                gamePaused = true;
+                pauseButton.textContent = 'Reanudar';
+            }
+            
+            // Reanudar juego
+            function resumeGame() {
+                gamePaused = false;
+                pauseButton.textContent = 'Pausar';
+                gameLoop();
+            }
+            
+            // Efectos de sonido (simulados con console.log)
+            function playSound(sound) {
+                console.log(`Sonido: ${sound}`);
+                // Aquí podríamos añadir reproducción de audio real
+            }
+            
+            // Bucle principal del juego
+            function gameLoop() {
+                if (!gameRunning) {
+                    animationFrameId = null;
+                    return;
+                }
+                
+                if (gamePaused) {
+                    animationFrameId = null;
+                    return;
+                }
+                
+                // Limpiar canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Actualizar posiciones
+                movePlayers();
+                moveBall();
+                
+                // Dibujar elementos
+                drawBoard();
+                drawGoals();
+                drawPlayers();
+                drawBall();
+                
+                // Continuar bucle
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+            
+            // Configurar eventos de botones
+            startButton.addEventListener('click', () => {
+                startGame();
+            });
+            
+            continueButton.addEventListener('click', () => {
+                goalMessage.classList.remove('visible');
+                gameRunning = true;
+                gameLoop();
+            });
+            
+            restartButton.addEventListener('click', () => {
+                winnerMessage.classList.remove('visible');
+                startGame();
+            });
+            
+            resetButton.addEventListener('click', () => {
+                startGame();
+            });
+            
+            pauseButton.addEventListener('click', () => {
+                togglePause();
+            });
+            
+            // Mostrar mensaje inicial
+            startMessage.classList.add('visible');
+            
+            // Configurar controles
+            setupControls();
+        });
+    </script>
+</body>
+</html>

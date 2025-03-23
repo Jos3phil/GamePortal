@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #222;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 20px auto;
+            border: 4px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: #111;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        #game-board {
+            display: grid;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .snake-head {
+            background-color: #4CAF50;
+            border-radius: 20%;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.7);
+        }
+        
+        .snake-body {
+            background-color: #388E3C;
+            border-radius: 20%;
+        }
+        
+        .food {
+            background-color: #FF5722;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(255, 87, 34, 0.7);
+            animation: pulse 1s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            from {
+                transform: scale(0.8);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+        
+        .special-food {
+            background-color: #8E24AA;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(142, 36, 170, 0.9);
+            animation: specialPulse 0.7s infinite alternate;
+        }
+        
+        @keyframes specialPulse {
+            from {
+                transform: scale(0.8);
+            }
+            to {
+                transform: scale(1.1);
+            }
+        }
+        
+        .wall {
+            background-color: #455A64;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 500px;
+            margin-bottom: 10px;
+        }
+        
+        .score-container, .level-container, .high-score-container {
+            background-color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .score-label, .level-label, .high-score-label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #BBB;
+        }
+        
+        .score-value, .level-value, .high-score-value {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            background-color: #2E7D32;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background-color: #388E3C;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .modal-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
+        }
+        
+        .modal-content {
+            font-size: 18px;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.5;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .modal-score {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #FF5722;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #BBB;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+        
+        
+        
+        .game-over-animation {
+            animation: gameOverShake 0.5s;
+        }
+        
+        @keyframes gameOverShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        
+        @media (max-width: 600px) {
+            .game-container, .game-info {
+                width: 90%;
+            }
+            
+            .game-container {
+                height: auto;
+                aspect-ratio: 1/1;
+            }
+            
+            .score-container, .level-container, .high-score-container {
+                min-width: 70px;
+                padding: 5px 10px;
+            }
+            
+            .score-value, .level-value, .high-score-value {
+                font-size: 18px;
+            }
+            
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-info">
+        <div class="score-container">
+            <div class="score-label">Puntuación</div>
+            <div class="score-value" id="score">0</div>
+        </div>
+        <div class="level-container">
+            <div class="level-label">Nivel</div>
+            <div class="level-value" id="level">1</div>
+        </div>
+        <div class="high-score-container">
+            <div class="high-score-label">Récord</div>
+            <div class="high-score-value" id="high-score">0</div>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <div id="game-board"></div>
+        
+        <div class="modal" id="start-modal">
+            <h2 class="modal-title">SNAKE</h2>
+            <div class="modal-content">
+                <p>Usa las teclas de flecha para moverte</p>
+                <p>Come comida para crecer y ganar puntos</p>
+                <p>¡No choques contra las paredes o tu propio cuerpo!</p>
+            </div>
+            <div class="modal-buttons">
+                <button id="start-button">¡Jugar!</button>
+                <button id="difficulty-button">Dificultad: Normal</button>
+            </div>
+        </div>
+        
+        <div class="modal" id="game-over-modal">
+            <h2 class="modal-title">¡Juego Terminado!</h2>
+            <div class="modal-score">Puntuación: <span id="final-score">0</span></div>
+            <div class="modal-content" id="game-over-message">
+                ¡Lo has hecho muy bien!
+            </div>
+            <div class="modal-buttons">
+                <button id="restart-button">Jugar de Nuevo</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button id="pause-button">Pausar</button>
+        <button id="new-game-button">Nuevo Juego</button>
+    </div>
+    
+    <div class="instructions">
+        <p><strong>Controles:</strong> Usa las teclas de flecha (← ↑ → ↓) para mover la serpiente. Presiona P para pausar.</p>
+        <p>La comida morada especial otorga el doble de puntos, ¡pero desaparece rápidamente!</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos del DOM
+            const gameBoard = document.getElementById('game-board');
+            const scoreElement = document.getElementById('score');
+            const levelElement = document.getElementById('level');
+            const highScoreElement = document.getElementById('high-score');
+            const startModal = document.getElementById('start-modal');
+            const gameOverModal = document.getElementById('game-over-modal');
+            const finalScoreElement = document.getElementById('final-score');
+            const gameOverMessage = document.getElementById('game-over-message');
+            const startButton = document.getElementById('start-button');
+            const difficultyButton = document.getElementById('difficulty-button');
+            const restartButton = document.getElementById('restart-button');
+            const pauseButton = document.getElementById('pause-button');
+            const newGameButton = document.getElementById('new-game-button');
+            
+            // Configuración del juego
+            const gridSize = 20; // Tamaño de la cuadrícula (20x20)
+            const initialSnakeLength = 4; // Longitud inicial de la serpiente
+            let snake = []; // Cuerpo de la serpiente (array de posiciones)
+            let food = {}; // Posición de la comida
+            let specialFood = null; // Comida especial (null si no hay)
+            let direction = 'right'; // Dirección inicial
+            let nextDirection = 'right'; // Próxima dirección (para evitar giros de 180°)
+            let gameRunning = false; // Estado del juego
+            let gamePaused = false; // Estado de pausa
+            let score = 0; // Puntuación
+            let highScore = localStorage.getItem('snakeHighScore') || 0; // Récord
+            let level = 1; // Nivel actual
+            let gameSpeed = 100; // Velocidad del juego (ms)
+            let gameLoop; // Referencia al intervalo del juego
+            let difficultyLevel = 'normal'; // Dificultad (easy, normal, hard)
+            let specialFoodTimer; // Temporizador para la comida especial
+            let walls = []; // Posiciones de las paredes (solo en niveles avanzados)
+            
+            // Mostrar récord guardado
+            highScoreElement.textContent = highScore;
+            
+            // Inicializar el tablero
+            function initializeBoard() {
+                // Limpiar el tablero
+                gameBoard.innerHTML = '';
+                gameBoard.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+                gameBoard.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                
+                // Crear la cuadrícula vacía
+                for (let i = 0; i < gridSize * gridSize; i++) {
+                    const cell = document.createElement('div');
+                    gameBoard.appendChild(cell);
+                }
+            }
+            
+            // Inicializar la serpiente
+            function initializeSnake() {
+                snake = [];
+                // Colocar la serpiente en el centro horizontalmente, a 1/3 del alto
+                const startY = Math.floor(gridSize / 3);
+                const startX = Math.floor(gridSize / 2) - Math.floor(initialSnakeLength / 2);
+                
+                // Crear segmentos iniciales
+                for (let i = 0; i < initialSnakeLength; i++) {
+                    snake.push({
+                        x: startX - i, // Disminuir X para cada segmento (serpiente hacia la izquierda)
+                        y: startY
+                    });
+                }
+                
+                // Dirección inicial
+                direction = 'right';
+                nextDirection = 'right';
+            }
+            
+            // Generar comida en posición aleatoria
+            function generateFood() {
+                let validPosition = false;
+                let newFood;
+                
+                // Buscar posición válida (no ocupada por serpiente o paredes)
+                while (!validPosition) {
+                    newFood = {
+                        x: Math.floor(Math.random() * gridSize),
+                        y: Math.floor(Math.random() * gridSize)
+                    };
+                    
+                    validPosition = true;
+                    
+                    // Verificar si está en la serpiente
+                    for (let segment of snake) {
+                        if (segment.x === newFood.x && segment.y === newFood.y) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    
+                    // Verificar si está en una pared
+                    if (validPosition) {
+                        for (let wall of walls) {
+                            if (wall.x === newFood.x && wall.y === newFood.y) {
+                                validPosition = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Verificar si está en la comida especial
+                    if (validPosition && specialFood) {
+                        if (specialFood.x === newFood.x && specialFood.y === newFood.y) {
+                            validPosition = false;
+                        }
+                    }
+                }
+                
+                food = newFood;
+            }
+            
+            // Generar comida especial (doble puntos, desaparece rápido)
+            function generateSpecialFood() {
+                if (specialFood) return; // Ya hay una comida especial
+                
+                // Solo generar comida especial ocasionalmente (25% de probabilidad)
+                if (Math.random() > 0.25) return;
+                
+                let validPosition = false;
+                let newSpecialFood;
+                
+                // Buscar posición válida
+                while (!validPosition) {
+                    newSpecialFood = {
+                        x: Math.floor(Math.random() * gridSize),
+                        y: Math.floor(Math.random() * gridSize)
+                    };
+                    
+                    validPosition = true;
+                    
+                    // Verificar si está en la serpiente
+                    for (let segment of snake) {
+                        if (segment.x === newSpecialFood.x && segment.y === newSpecialFood.y) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    
+                    // Verificar si está en una pared
+                    if (validPosition) {
+                        for (let wall of walls) {
+                            if (wall.x === newSpecialFood.x && wall.y === newSpecialFood.y) {
+                                validPosition = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Verificar si está en la comida normal
+                    if (validPosition && food.x === newSpecialFood.x && food.y === newSpecialFood.y) {
+                        validPosition = false;
+                    }
+                }
+                
+                specialFood = newSpecialFood;
+                
+                // Programar desaparición
+                clearTimeout(specialFoodTimer);
+                specialFoodTimer = setTimeout(() => {
+                    specialFood = null;
+                    renderGame(); // Actualizar visualización
+                }, 5000); // Desaparece después de 5 segundos
+            }
+            
+            // Generar paredes (solo en niveles avanzados)
+            function generateWalls() {
+                walls = [];
+                
+                // A partir del nivel 3, agregar paredes
+                if (level >= 3) {
+                    const numWalls = Math.min(10 + (level - 3) * 5, 40); // Aumentar con el nivel, máximo 40
+                    
+                    for (let i = 0; i < numWalls; i++) {
+                        let validPosition = false;
+                        let wall;
+                        
+                        // Buscar posición válida
+                        while (!validPosition) {
+                            wall = {
+                                x: Math.floor(Math.random() * gridSize),
+                                y: Math.floor(Math.random() * gridSize)
+                            };
+                            
+                            // Evitar colocar paredes muy cerca de la serpiente inicial
+                            const safeZoneSize = 5;
+                            const startY = Math.floor(gridSize / 3);
+                            const startX = Math.floor(gridSize / 2);
+                            
+                            if (Math.abs(wall.x - startX) < safeZoneSize && 
+                                Math.abs(wall.y - startY) < safeZoneSize) {
+                                continue;
+                            }
+                            
+                            validPosition = true;
+                            
+                            // Verificar si ya hay una pared en esa posición
+                            for (let existingWall of walls) {
+                                if (existingWall.x === wall.x && existingWall.y === wall.y) {
+                                    validPosition = false;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        walls.push(wall);
+                    }
+                }
+            }
+            
+            // Mover la serpiente
+            function moveSnake() {
+                // Actualizar dirección
+                direction = nextDirection;
+                
+                // Calcular nueva posición de la cabeza
+                const head = { ...snake[0] }; // Copiar la cabeza actual
+                
+                // Mover según la dirección
+                switch (direction) {
+                    case 'up':
+                        head.y--;
+                        if (head.y < 0) head.y = gridSize - 1; // Aparece abajo
+                        break;
+                    case 'down':
+                        head.y++;
+                        if (head.y >= gridSize) head.y = 0; // Aparece arriba
+                        break;
+                    case 'left':
+                        head.x--;
+                        if (head.x < 0) head.x = gridSize - 1; // Aparece a la derecha
+                        break;
+                    case 'right':
+                        head.x++;
+                        if (head.x >= gridSize) head.x = 0; // Aparece a la izquierda
+                        break;
+                }
+                
+                // Comprobar colisión con las paredes del tablero
+                if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize) {
+                    gameOver();
+                    return;
+                }
+                
+                // Comprobar colisión con las paredes generadas
+                for (let wall of walls) {
+                    if (head.x === wall.x && head.y === wall.y) {
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                // Comprobar colisión con el propio cuerpo
+                for (let segment of snake) {
+                    if (head.x === segment.x && head.y === segment.y) {
+                        gameOver();
+                        return;
+                    }
+                }
+                
+                // Añadir nueva cabeza al principio
+                snake.unshift(head);
+                
+                // Comprobar si come comida
+                let ate = false;
+                
+                // Comida normal
+                if (head.x === food.x && head.y === food.y) {
+                    // Aumentar puntuación
+                    score += 10;
+                    scoreElement.textContent = score;
+                    ate = true;
+                    
+                    // Generar nueva comida
+                    generateFood();
+                    
+                    // Posibilidad de generar comida especial
+                    generateSpecialFood();
+                    
+                    // Comprobar si sube de nivel
+                    checkLevelUp();
+                }
+                
+                // Comida especial
+                if (specialFood && head.x === specialFood.x && head.y === specialFood.y) {
+                    // Aumentar puntuación (doble)
+                    score += 20;
+                    scoreElement.textContent = score;
+                    ate = true;
+                    
+                    // Eliminar comida especial
+                    specialFood = null;
+                    clearTimeout(specialFoodTimer);
+                    
+                    // Comprobar si sube de nivel
+                    checkLevelUp();
+                }
+                
+                // Si no come, eliminar el último segmento
+                if (!ate) {
+                    snake.pop();
+                }
+            }
+            
+            // Comprobar si sube de nivel
+            function checkLevelUp() {
+                // Subir de nivel cada 100 puntos
+                const newLevel = Math.floor(score / 100) + 1;
+                
+                if (newLevel > level) {
+                    level = newLevel;
+                    levelElement.textContent = level;
+                    
+                    // Aumentar velocidad
+                    updateGameSpeed();
+                    
+                    // Actualizar paredes en niveles avanzados
+                    if (level >= 3) {
+                        generateWalls();
+                    }
+                    
+                    // Mostrar mensaje de nivel
+                    showLevelUpMessage();
+                }
+            }
+            
+            // Actualizar velocidad según nivel y dificultad
+            function updateGameSpeed() {
+                let baseSpeed;
+                
+                // Velocidad base según dificultad
+                switch (difficultyLevel) {
+                    case 'easy':
+                        baseSpeed = 200;
+                        break;
+                    case 'normal':
+                        baseSpeed = 150;
+                        break;
+                    case 'hard':
+                        baseSpeed = 100;
+                        break;
+                }
+                
+                // Reducir tiempo entre movimientos con cada nivel (más rápido)
+                gameSpeed = Math.max(50, baseSpeed - (level - 1) * 10);
+                
+                // Reiniciar intervalo con nueva velocidad
+                if (gameRunning && !gamePaused) {
+                    clearInterval(gameLoop);
+                    gameLoop = setInterval(gameStep, gameSpeed);
+                }
+            }
+            
+            // Mostrar mensaje de nuevo nivel
+            function showLevelUpMessage() {
+                const levelUpMessage = document.createElement('div');
+                levelUpMessage.textContent = `¡NIVEL ${level}!`;
+                levelUpMessage.style.position = 'absolute';
+                levelUpMessage.style.top = '50%';
+                levelUpMessage.style.left = '50%';
+                levelUpMessage.style.transform = 'translate(-50%, -50%)';
+                levelUpMessage.style.color = '#4CAF50';
+                levelUpMessage.style.fontSize = '48px';
+                levelUpMessage.style.fontWeight = 'bold';
+                levelUpMessage.style.textShadow = '0 0 10px rgba(76, 175, 80, 0.7)';
+                levelUpMessage.style.zIndex = '50';
+                
+                gameBoard.appendChild(levelUpMessage);
+                
+                // Animar y eliminar después de un momento
+                setTimeout(() => {
+                    levelUpMessage.style.transition = 'all 0.5s';
+                    levelUpMessage.style.opacity = '0';
+                    levelUpMessage.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                    
+                    setTimeout(() => {
+                        levelUpMessage.remove();
+                    }, 500);
+                }, 1000);
+            }
+            
+            // Renderizar el juego
+            function renderGame() {
+                // Obtener todas las celdas
+                const cells = gameBoard.children;
+                
+                // Limpiar todas las celdas
+                for (let i = 0; i < cells.length; i++) {
+                    cells[i].className = '';
+                    cells[i].innerHTML = '';
+                }
+                
+                // Dibujar paredes
+                for (let wall of walls) {
+                    const wallIndex = wall.y * gridSize + wall.x;
+                    if (cells[wallIndex]) {
+                        cells[wallIndex].className = 'wall';
+                    }
+                }
+                
+                // Dibujar comida
+                const foodIndex = food.y * gridSize + food.x;
+                if (cells[foodIndex]) {
+                    cells[foodIndex].className = 'food';
+                }
+                
+                // Dibujar comida especial
+                if (specialFood) {
+                    const specialFoodIndex = specialFood.y * gridSize + specialFood.x;
+                    if (cells[specialFoodIndex]) {
+                        cells[specialFoodIndex].className = 'special-food';
+                    }
+                }
+                
+                // Dibujar serpiente
+                for (let i = 0; i < snake.length; i++) {
+                    const segment = snake[i];
+                    const segmentIndex = segment.y * gridSize + segment.x;
+                    
+                    if (cells[segmentIndex]) {
+                        if (i === 0) {
+                            // Cabeza
+                            cells[segmentIndex].className = 'snake-head';
+                            
+                          
+                            
+                            cells[segmentIndex].className = 'snake-head';
+                        } else {
+                            // Cuerpo
+                            cells[segmentIndex].className = 'snake-body';
+                        }
+                    }
+                }
+            }
+            
+            // Paso del juego
+            function gameStep() {
+                moveSnake();
+                renderGame();
+            }
+            
+            // Iniciar el juego
+            function startGame() {
+                // Inicializar elementos
+                initializeBoard();
+                initializeSnake();
+                generateWalls();
+                generateFood();
+                
+                // Restablecer variables
+                score = 0;
+                level = 1;
+                scoreElement.textContent = score;
+                levelElement.textContent = level;
+                
+                // Actualizar velocidad
+                updateGameSpeed();
+                
+                // Ocultar modales
+                startModal.classList.remove('active');
+                gameOverModal.classList.remove('active');
+                
+                // Iniciar bucle del juego
+                gameRunning = true;
+                gamePaused = false;
+                pauseButton.textContent = 'Pausar';
+                
+                clearInterval(gameLoop);
+                gameLoop = setInterval(gameStep, gameSpeed);
+                
+                // Renderizar estado inicial
+                renderGame();
+            }
+            
+            // Pausar/Reanudar juego
+            function togglePause() {
+                if (!gameRunning) return;
+                
+                gamePaused = !gamePaused;
+                
+                if (gamePaused) {
+                    clearInterval(gameLoop);
+                    pauseButton.textContent = 'Reanudar';
+                } else {
+                    gameLoop = setInterval(gameStep, gameSpeed);
+                    pauseButton.textContent = 'Pausar';
+                }
+            }
+            
+            // Game Over
+            function gameOver() {
+                gameRunning = false;
+                clearInterval(gameLoop);
+                
+                // Efecto visual
+                gameBoard.classList.add('game-over-animation');
+                setTimeout(() => {
+                    gameBoard.classList.remove('game-over-animation');
+                }, 500);
+                
+                // Actualizar récord si es necesario
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreElement.textContent = highScore;
+                    localStorage.setItem('snakeHighScore', highScore);
+                    
+                    gameOverMessage.textContent = '¡Nuevo récord! Has superado tu puntuación máxima.';
+                } else if (score > 0) {
+                    gameOverMessage.textContent = `¡Buen intento! Has llegado al nivel ${level}.`;
+                } else {
+                    gameOverMessage.textContent = '¡Inténtalo de nuevo! Puedes hacerlo mejor.';
+                }
+                
+                // Mostrar puntuación final
+                finalScoreElement.textContent = score;
+                
+                // Mostrar modal de game over
+                setTimeout(() => {
+                    gameOverModal.classList.add('active');
+                }, 500);
+            }
+            
+            // Cambiar dificultad
+            function toggleDifficulty() {
+                switch (difficultyLevel) {
+                    case 'easy':
+                        difficultyLevel = 'normal';
+                        break;
+                    case 'normal':
+                        difficultyLevel = 'hard';
+                        break;
+                    case 'hard':
+                        difficultyLevel = 'easy';
+                        break;
+                }
+                
+                difficultyButton.textContent = `Dificultad: ${difficultyLevel.charAt(0).toUpperCase() + difficultyLevel.slice(1)}`;
+            }
+            
+            // Controles de teclado
+            document.addEventListener('keydown', function(e) {
+                // Control de dirección (evitando giros de 180°)
+                switch (e.key) {
+                    case 'ArrowUp':
+                        if (direction !== 'down') nextDirection = 'up';
+                        e.preventDefault();
+                        break;
+                    case 'ArrowDown':
+                        if (direction !== 'up') nextDirection = 'down';
+                        e.preventDefault();
+                        break;
+                    case 'ArrowLeft':
+                        if (direction !== 'right') nextDirection = 'left';
+                        e.preventDefault();
+                        break;
+                    case 'ArrowRight':
+                        if (direction !== 'left') nextDirection = 'right';
+                        e.preventDefault();
+                        break;
+                    case 'p':
+                    case 'P':
+                        togglePause();
+                        break;
+                }
+            });
+            
+            // Eventos de botones
+            startButton.addEventListener('click', startGame);
+            restartButton.addEventListener('click', startGame);
+            pauseButton.addEventListener('click', togglePause);
+            newGameButton.addEventListener('click', function() {
+                if (gameRunning) {
+                    clearInterval(gameLoop);
+                    clearTimeout(specialFoodTimer);
+                }
+                startModal.classList.add('active');
+            });
+            difficultyButton.addEventListener('click', toggleDifficulty);
+            
+            // Mostrar modal de inicio
+            startModal.classList.add('active');
+            
+            // Inicializar tablero
+            initializeBoard();
+        });
+    </script>
+</body>
+</html>
